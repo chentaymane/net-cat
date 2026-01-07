@@ -14,21 +14,29 @@ func StartClient(port string) {
 	}
 	defer conn.Close()
 
-	
 	scanner := bufio.NewScanner(os.Stdin)
 	fmt.Println("Connected to server!")
-	fmt.Print("enter your name :")
-	scanner.Scan()
+	
+	// Ask for name
+	fmt.Print("Enter your name: ")
+	scanner.Scan() // MUST call Scan before Text
 	name := scanner.Text()
-	for scanner.Scan() {
+
+	// Start live prompt loop
+	for {
+		fmt.Print("[", conn.LocalAddr(), "][", name, "]: ") // print prompt
+		if !scanner.Scan() { // read user input
+			break
+		}
 		text := scanner.Text()
+
 		if text == "exit" {
+			fmt.Println("Exiting...")
 			return
 		}
-		fmt.Print("[", conn.LocalAddr(), " ", name, "]: ", text)
-		conn.Write([]byte(name + "\n"))
-		conn.Write([]byte(text + "\n")) // ⬅ SEND TO SERVER
-	}
 
-	fmt.Println("Client exiting.")
+		// send name and message to server
+		conn.Write([]byte(name + "\n"))
+		conn.Write([]byte(text + "\n"))
+	}
 }

@@ -18,27 +18,30 @@ func StartServer(port string) {
 	fmt.Println("Server listening on port", port)
 
 	// Accept one connection
-	conn, err := listener.Accept()	
+	conn, err := listener.Accept()
 	fmt.Println("New connection !")
 	if err != nil {
 		panic(err)
 	}
-
-	reader := bufio.NewReader(conn)
-	name, err := reader.ReadString('\n')
-	name = strings.TrimSpace(name)
-	if err != nil {
-		fmt.Println("Client disconnected")
-		return
-	}
-
+ firstTime := true
 	for {
-
-		msgs, err := reader.ReadString('\n')
+		reader := bufio.NewReader(conn)
+		name, err := reader.ReadString('\n')
+		name = strings.TrimSpace(name)
+		if  firstTime {
+			fmt.Println(name, "Has joined !")
+			firstTime =false
+		}
 		if err != nil {
 			fmt.Println("Client disconnected")
 			return
 		}
-		fmt.Print("[",conn.LocalAddr()," ",name,"]: ", msgs)
+		msgs, err := reader.ReadString('\n')
+			if err != nil {
+				fmt.Println("Client disconnected")
+				return
+			}
+			fmt.Print("[", conn.LocalAddr(), "][", name, "]: ", msgs)
+		}
 	}
-}
+
