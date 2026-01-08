@@ -21,6 +21,7 @@ func StartClient(port string) {
 	fmt.Print("Enter your name: ")
 	scanner.Scan() // MUST call Scan before Text
 	name := scanner.Text()
+	conn.Write([]byte(name + "\n"))
 
 	// Start live prompt loop
 	for {
@@ -36,7 +37,6 @@ func StartClient(port string) {
 		}
 
 		// send name and message to server
-		conn.Write([]byte(name + "\n"))
 		conn.Write([]byte(text + "\n"))
 	}
 }
