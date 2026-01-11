@@ -10,15 +10,16 @@ import (
 )
 
 type Client struct {
-	conn net.Conn
-	name string
+	conn     net.Conn
+	name     string
 	messages []string
-	mu   sync.Mutex
+	mu       sync.Mutex
 }
 
 var (
 	clients = make(map[net.Conn]*Client)
 	mu      sync.Mutex
+	history []string // store chat history
 )
 
 func main() {
@@ -38,7 +39,7 @@ func main() {
 }
 
 func handleClient(conn net.Conn) {
-	defer conn.Close() 
+	defer conn.Close()
 	reader := bufio.NewReader(conn)
 
 	// Ask for name
@@ -54,23 +55,49 @@ func handleClient(conn net.Conn) {
 	mu.Lock()
 	clients[conn] = client
 	mu.Unlock()
+
+	// Send chat history to new client
+	mu.Lock()
+	for _, msg := range history {
+		client.mu.Lock()
+		fmt.Fprintln(client.conn, msg)
+		client.mu.Unlock()
+	}
+	mu.Unlock()
+
 	// Broadcast join message to all except self
-	broadcast(fmt.Sprintf("%s has joined our chat...", name), conn, false)
+	joinMsg := fmt.Sprintf("%s has joined our chat...", name)
+	saveHistory(joinMsg)         // add to history
+	broadcast(joinMsg, conn, false)
 
 	for {
 		msg, err := reader.ReadString('\n')
-		client.messages = append(client.messages, msg)
+		
 		if err != nil {
+			leaveMsg := fmt.Sprintf("%s has left our chat...", name)
+			fmt.Println(leaveMsg)
+			saveHistory(leaveMsg)
+
 			mu.Lock()
 			delete(clients, conn)
 			mu.Unlock()
-			broadcast(fmt.Sprintf("%s has left our chat...", name), conn, true)
+
+			broadcast(leaveMsg, conn, true)
 			return
 		}
 		msg = strings.TrimSpace(msg)
 		timestamp := time.Now().Format("2006-01-02 15:04:05")
-		broadcast(fmt.Sprintf("[%s][%s]: %s", timestamp, name, msg), conn, false)
+		fullMsg := fmt.Sprintf("[%s][%s]: %s", timestamp, name, msg)
+
+		saveHistory(fullMsg)
+		broadcast(fullMsg, conn, false)
 	}
+}
+
+func saveHistory(msg string) {
+	mu.Lock()
+	history = append(history, msg)
+	mu.Unlock()
 }
 
 // broadcast message to all clients
@@ -78,7 +105,7 @@ func handleClient(conn net.Conn) {
 // isInfo=false → normal messages, skip sender
 func broadcast(msg string, sender net.Conn, isInfo bool) {
 	// Print to server log
-	fmt.Println(msg) // 
+	fmt.Println(msg) //
 
 	mu.Lock()
 	list := make([]*Client, 0, len(clients))
@@ -98,4 +125,3 @@ func broadcast(msg string, sender net.Conn, isInfo bool) {
 		c.mu.Unlock()
 	}
 }
-
