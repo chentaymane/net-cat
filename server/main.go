@@ -12,6 +12,7 @@ import (
 type Client struct {
 	conn net.Conn
 	name string
+	messages []string
 	mu   sync.Mutex
 }
 
@@ -37,7 +38,7 @@ func main() {
 }
 
 func handleClient(conn net.Conn) {
-	defer conn.Close()
+	defer conn.Close() 
 	reader := bufio.NewReader(conn)
 
 	// Ask for name
@@ -53,12 +54,12 @@ func handleClient(conn net.Conn) {
 	mu.Lock()
 	clients[conn] = client
 	mu.Unlock()
-
 	// Broadcast join message to all except self
 	broadcast(fmt.Sprintf("%s has joined our chat...", name), conn, false)
 
 	for {
 		msg, err := reader.ReadString('\n')
+		client.messages = append(client.messages, msg)
 		if err != nil {
 			mu.Lock()
 			delete(clients, conn)
@@ -76,16 +77,18 @@ func handleClient(conn net.Conn) {
 // isInfo=true → send to all (joins/leaves)
 // isInfo=false → normal messages, skip sender
 func broadcast(msg string, sender net.Conn, isInfo bool) {
+	// Print to server log
+	fmt.Println(msg) // 
+
 	mu.Lock()
 	list := make([]*Client, 0, len(clients))
 	for _, c := range clients {
 		list = append(list, c)
 	}
 	mu.Unlock()
-
 	for _, c := range list {
 		if !isInfo && c.conn == sender {
-			continue // skip sender
+			continue // skip sender for normal messages
 		}
 		c.mu.Lock()
 		if !strings.HasSuffix(msg, "\n") {
@@ -95,3 +98,4 @@ func broadcast(msg string, sender net.Conn, isInfo bool) {
 		c.mu.Unlock()
 	}
 }
+

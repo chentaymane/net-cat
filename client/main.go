@@ -55,6 +55,7 @@ func main() {
 			fmt.Println("Exiting...")
 			return
 		}
+		
 		conn.Write([]byte(text + "\n"))
 	}
 }
