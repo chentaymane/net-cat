@@ -12,7 +12,6 @@ import (
 type Client struct {
 	conn     net.Conn
 	name     string
-	messages []string
 	mu       sync.Mutex
 }
 
