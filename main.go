@@ -20,6 +20,7 @@ var (
 	mu      sync.Mutex
 	history []string
 )
+const MAX_CLIENT = 10 
 
 const logo = `Welcome to TCP-Chat!
          _nnnn_
@@ -41,7 +42,7 @@ _)      \.___.,|     .'
 `
 
 func main() {
-	listener, err := net.Listen("tcp", "127.0.0.1:8080")
+	listener, err := net.Listen("tcp", ":8080")
 	if err != nil {
 		panic(err)
 	}
@@ -58,8 +59,11 @@ func main() {
 
 func handleClient(conn net.Conn) {
 	defer conn.Close()
+	if len(clients)>=MAX_CLIENT {
+		conn.Write([]byte("max client now !"))
+		return
+	}
 	reader := bufio.NewReader(conn)
-
 	// Send logo
 	conn.Write([]byte(logo))
 
