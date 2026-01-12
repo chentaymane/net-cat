@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"log"
 	"net"
 	"strings"
 	"sync"
@@ -96,6 +97,7 @@ func handleClient(conn net.Conn) {
 
 	// Broadcast join message
 	joinMsg := fmt.Sprintf("%s has joined our chat...", name)
+	log.Println(joinMsg)
 	saveHistory(joinMsg)
 	broadcastToOthers(joinMsg, conn)
 
@@ -125,7 +127,7 @@ func handleClient(conn net.Conn) {
 		timestamp := time.Now().Format("2006-01-02 15:04:05")
 		fullMsg := fmt.Sprintf("[%s][%s]:%s", timestamp, name, msg)
 		saveHistory(fullMsg)
-		
+		log.Println(fullMsg)
 		// Broadcast to others
 		broadcastToOthers(fullMsg, conn)
 		
