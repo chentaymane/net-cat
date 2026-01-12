@@ -10,15 +10,15 @@ import (
 )
 
 type Client struct {
-	conn     net.Conn
-	name     string
-	mu       sync.Mutex
+	conn net.Conn
+	name string
+	mu   sync.Mutex
 }
 
 var (
 	clients = make(map[net.Conn]*Client)
 	mu      sync.Mutex
-	history []string // store chat history
+	history []string
 )
 
 func main() {
@@ -55,7 +55,7 @@ func handleClient(conn net.Conn) {
 	clients[conn] = client
 	mu.Unlock()
 
-	// Send chat history to new client
+	// Send chat history
 	mu.Lock()
 	for _, msg := range history {
 		client.mu.Lock()
@@ -64,16 +64,16 @@ func handleClient(conn net.Conn) {
 	}
 	mu.Unlock()
 
-	// Broadcast join message to all except self
-	joinMsg := fmt.Sprintf("%s has joined our chat...", name)
-	saveHistory(joinMsg)         // add to history
-	broadcast(joinMsg, conn, false)
-
+	// Broadcast join message (without prompt)
+	joinMsg := fmt.Sprintf("%s has joined the chat", name)
+	saveHistory(joinMsg)
+	broadcast(joinMsg, nil)
+	sendPrompt(client)
 	for {
 		msg, err := reader.ReadString('\n')
-		
 		if err != nil {
-			leaveMsg := fmt.Sprintf("%s has left our chat...", name)
+			// Leave message (without prompt)
+			leaveMsg := fmt.Sprintf("%s has left the chat", name)
 			fmt.Println(leaveMsg)
 			saveHistory(leaveMsg)
 
@@ -81,15 +81,24 @@ func handleClient(conn net.Conn) {
 			delete(clients, conn)
 			mu.Unlock()
 
-			broadcast(leaveMsg, conn, true)
+			broadcast(leaveMsg, nil)
 			return
 		}
+
 		msg = strings.TrimSpace(msg)
+		if msg == "" {
+			// ignore empty messages
+			continue
+		}
+
 		timestamp := time.Now().Format("2006-01-02 15:04:05")
 		fullMsg := fmt.Sprintf("[%s][%s]: %s", timestamp, name, msg)
 
 		saveHistory(fullMsg)
-		broadcast(fullMsg, conn, false)
+		broadcast(fullMsg, conn)
+
+		// Only send soft prompt to the client who just typed
+		sendPrompt(client)
 	}
 }
 
@@ -99,12 +108,8 @@ func saveHistory(msg string) {
 	mu.Unlock()
 }
 
-// broadcast message to all clients
-// isInfo=true → send to all (joins/leaves)
-// isInfo=false → normal messages, skip sender
-func broadcast(msg string, sender net.Conn, isInfo bool) {
-	// Print to server log
-	fmt.Println(msg) //
+func broadcast(msg string, skipSender net.Conn) {
+	fmt.Println(msg) // server log
 
 	mu.Lock()
 	list := make([]*Client, 0, len(clients))
@@ -112,15 +117,21 @@ func broadcast(msg string, sender net.Conn, isInfo bool) {
 		list = append(list, c)
 	}
 	mu.Unlock()
+
 	for _, c := range list {
-		if !isInfo && c.conn == sender {
-			continue // skip sender for normal messages
+		if c.conn == skipSender {
+			continue
 		}
 		c.mu.Lock()
-		if !strings.HasSuffix(msg, "\n") {
-			msg += "\n"
-		}
-		fmt.Fprint(c.conn, msg)
+		fmt.Fprintln(c.conn, msg)
 		c.mu.Unlock()
 	}
+}
+
+// send a soft prompt ONLY to this client
+func sendPrompt(c *Client) {
+	timestamp := time.Now().Format("2006-01-02 15:04:05")
+	c.mu.Lock()
+	fmt.Fprint(c.conn, "[", timestamp, "][", c.name, "]: ")
+	c.mu.Unlock()
 }
