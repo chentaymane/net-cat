@@ -21,7 +21,8 @@ var (
 	mu      sync.Mutex
 	history []string
 )
-const MAX_CLIENT = 10 
+
+const MAX_CLIENT = 10
 
 const logo = `Welcome to TCP-Chat!
          _nnnn_
@@ -60,7 +61,7 @@ func main() {
 
 func handleClient(conn net.Conn) {
 	defer conn.Close()
-	if len(clients)>=MAX_CLIENT {
+	if len(clients) >= MAX_CLIENT {
 		conn.Write([]byte("max client now !"))
 		return
 	}
@@ -74,9 +75,16 @@ func handleClient(conn net.Conn) {
 	if err != nil {
 		return
 	}
-	name = strings.TrimSpace(name)
-	if name == "" {
-		return
+	for {
+		if validName(name) && name != "" {
+			break
+		}
+		conn.Write([]byte("Name invalid or already exists\n[ENTER NEW NAME]: "))
+		name, err = reader.ReadString('\n')
+		if err != nil {
+			return
+		}
+		name = strings.TrimSpace(name)
 	}
 
 	client := &Client{conn: conn, name: name}
@@ -130,7 +138,7 @@ func handleClient(conn net.Conn) {
 		log.Println(fullMsg)
 		// Broadcast to others
 		broadcastToOthers(fullMsg, conn)
-		
+
 		// Send new prompt to sender
 		sendPrompt(client)
 	}
@@ -191,4 +199,16 @@ func sendPrompt(c *Client) {
 func sendPromptLocked(c *Client) {
 	timestamp := time.Now().Format("2006-01-02 15:04:05")
 	fmt.Fprintf(c.conn, "[%s][%s]:", timestamp, c.name)
+}
+
+func validName(name string) bool {
+	mu.Lock()
+	defer mu.Unlock()
+
+	for _, c := range clients {
+		if c.name == name {
+			return false
+		}
+	}
+	return true
 }
