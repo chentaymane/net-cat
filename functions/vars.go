@@ -17,7 +17,12 @@ var (
 	history []string
 )
 
-const MAX_CLIENT = 10
+
+const (
+	MAX_CLIENT   = 10
+	allowedChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .,!?;:'-()[]{}@#$%&*+=/_\"\\\t"
+)
+
 const logo = "\033[38;5;208mWelcome to TCP-Chat!\033[0m\n" +
     "\033[1;37m         _nnnn_\033[0m\n" +
     "\033[1;37m        dGGGGMMb\033[0m\n" +
