@@ -78,7 +78,7 @@ func HandleClient(conn net.Conn) {
 		}
 
 		msg = strings.TrimSpace(msg)
-		if msg == "" {
+		if !validMsg(msg) {
 			sendPrompt(client)
 			continue
 		}
