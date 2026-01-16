@@ -3,16 +3,24 @@ package main
 import (
 	"log"
 	"net"
+	"os"
 
 	"main/functions"
 )
 
 func main() {
-	listener, err := net.Listen("tcp", ":8989")
+	
+	port := ""
+	if len(os.Args) == 2 && os.Args[1] != "" {
+		port = os.Args[1]
+	} else {
+		port = "8989"
+	}
+	listener, err := net.Listen("tcp", ":"+port)
 	if err != nil {
 		panic(err)
 	}
-	log.Println("Server listening on port 8989")
+	log.Println("\x1b[38;5;198mServer listening on port " + port+"\x1b[0m")
 
 	for {
 		conn, err := listener.Accept()

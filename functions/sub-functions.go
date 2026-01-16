@@ -6,6 +6,12 @@ import (
 	"time"
 )
 
+func saveHistory(msg string) {
+	mu.Lock()
+	defer mu.Unlock()
+	history = append(history, msg)
+}
+
 func sendPrompt(c *Client) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -14,7 +20,7 @@ func sendPrompt(c *Client) {
 
 func sendPromptLocked(c *Client) {
 	timestamp := time.Now().Format("2006-01-02 15:04:05")
-	fmt.Fprintf(c.conn, "[%s][%s]:", timestamp, c.name)
+	fmt.Fprintf(c.conn, "\x1b[1;37m[%s][%s]:\x1b[0m", timestamp, c.name)
 }
 
 func validName(name string) bool {

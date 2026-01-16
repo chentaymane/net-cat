@@ -55,7 +55,7 @@ func HandleClient(conn net.Conn) {
 	mu.Unlock()
 
 	// Broadcast join message
-	joinMsg := fmt.Sprintf("\x1b[38;5;46m %s has joined our chat...\x1b[0m", name)
+	joinMsg := fmt.Sprintf("\x1b[38;5;46m%s has joined our chat...\x1b[0m", name)
 	log.Println(joinMsg)
 	saveHistory(joinMsg)
 	broadcastToOthers(joinMsg, conn)
@@ -79,6 +79,36 @@ func HandleClient(conn net.Conn) {
 
 		msg = strings.TrimSpace(msg)
 		if !validMsg(msg) {
+			sendPrompt(client)
+			continue
+		}
+		if msg == "/name" {
+			conn.Write([]byte("\x1b[1;37m[ENTER YOUR NEW NAME]: \x1b[0m"))
+			newName, err := reader.ReadString('\n')
+			if err != nil {
+				return
+			}
+			newName = strings.TrimSpace(newName)
+
+			for {
+				if validName(newName) && newName != "" {
+					client.name = newName
+					break
+				}
+				conn.Write([]byte("\x1b[38;5;199mName invalid or already exists !\n[ENTER NEW NAME]: \x1b[0m"))
+				newName, err = reader.ReadString('\n')
+				if err != nil {
+					return
+				}
+				newName = strings.TrimSpace(newName)
+			}
+			NewNameMsg := fmt.Sprintf("\x1b[1;38;5;196m[%s] \x1b[38;5;173mhas changed his name to \x1b[38;5;196m[%s]\x1b[0m", name, newName)
+			saveHistory(NewNameMsg)
+			log.Println(NewNameMsg)
+			// Broadcast to others
+			broadcastToOthers(NewNameMsg, conn)
+
+			name = newName
 			sendPrompt(client)
 			continue
 		}
