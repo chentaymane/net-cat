@@ -9,9 +9,15 @@ import (
 	"time"
 )
 
-func HandleClient(conn net.Conn) {
+func HandleClient(conn net.Conn, limit chan int) {
 	defer conn.Close()
-	if len(clients) >= MAX_CLIENT {
+	// if len(clients) >= MAX_CLIENT {
+	// 	conn.Write([]byte("\x1b[38;5;227mmax client now !\x1b[0m"))
+	// 	return
+	// }
+	select {
+	case limit <- 1:
+	default:
 		conn.Write([]byte("\x1b[38;5;227mmax client now !\x1b[0m"))
 		return
 	}
@@ -39,10 +45,10 @@ func HandleClient(conn net.Conn) {
 	}
 
 	client := &Client{conn: conn, name: name}
-
+	defer DeleteClient(client, limit)
 	// Add client
 	mu.Lock()
-	clients[conn] = client
+	clients[name] = client
 	mu.Unlock()
 
 	// Send chat history
@@ -71,14 +77,36 @@ func HandleClient(conn net.Conn) {
 			log.Println(leaveMsg)
 			saveHistory(leaveMsg)
 			mu.Lock()
-			delete(clients, conn)
+			delete(clients, name)
 			mu.Unlock()
 			broadcastToAll(leaveMsg, nil)
 			return
 		}
 
 		msg = strings.TrimSpace(msg)
-		if !validMsg(msg) {
+		if !validMsg(msg)  {
+			sendPrompt(client)
+			continue
+		}
+		tag := false
+
+		mu.Lock()
+		for _, r := range clients {
+			if r != client && strings.HasPrefix(msg, "@"+r.name) {
+				Tag(client, r, msg)
+				tag = true
+				break
+			}
+
+		}
+		mu.Unlock()
+
+		if tag {
+			continue
+		}
+
+		if msg == "/users" {
+			printUsers(conn)
 			sendPrompt(client)
 			continue
 		}
@@ -92,7 +120,7 @@ func HandleClient(conn net.Conn) {
 
 			for {
 				if validName(newName) && newName != "" {
-					client.name = newName
+					RenameClient(clients[client.name], newName)
 					break
 				}
 				conn.Write([]byte("\x1b[38;5;199mName invalid or already exists !\n[ENTER NEW NAME]: \x1b[0m"))

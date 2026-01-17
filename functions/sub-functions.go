@@ -2,6 +2,8 @@ package functions
 
 import (
 	"fmt"
+	"log"
+	"net"
 	"strings"
 	"time"
 )
@@ -26,21 +28,16 @@ func sendPromptLocked(c *Client) {
 func validName(name string) bool {
 	mu.Lock()
 	defer mu.Unlock()
-	if name == "" || len(name) > 10 {
+	if strings.TrimSpace(name) == "" || len(name) > 10 {
 		return false
 	}
-	for _, r := range name {
-		// Si le caractère n'est PAS une minuscule ET n'est PAS une majuscule ET n'est PAS un chiffre
-		if !(r >= 'a' && r <= 'z') && !(r >= 'A' && r <= 'Z') && !(r >= '0' && r <= '9') {
+	for _, r := range strings.ToLower(name) {
+		if !(r >= 'a' && r <= 'z') && !(r >= '0' && r <= '9') {
 			return false
 		}
 	}
-	for _, c := range clients {
-		if c.name == name {
-			return false
-		}
-	}
-	return true
+	_, exists := clients[name]
+	return !exists
 }
 
 func validMsg(msg string) bool {
@@ -60,4 +57,38 @@ func validMsg(msg string) bool {
 	}
 
 	return true
+}
+
+func DeleteClient(c *Client, limit chan int) {
+	mu.Lock()
+	defer mu.Unlock()
+	<-limit
+	delete(clients, c.name)
+}
+
+func RenameClient(c *Client, newName string) {
+	mu.Lock()
+	defer mu.Unlock()
+	delete(clients, c.name)
+	c.name = newName
+	clients[newName] = c
+}
+
+func printUsers(conn net.Conn) {
+	for _, c := range clients {
+		fmt.Fprintln(conn, "\x1b[1;38;5;226m"+c.name+"\x1b[0m")
+	}
+}
+func Tag(sender *Client, receiver *Client, msg string) {
+	timestamp := time.Now().Format("2006-01-02 15:04:05")
+	PRVmsg := strings.TrimSpace(msg[len("@"+receiver.name):])
+	
+	formatted := fmt.Sprintf("\x1b[1;37m[%s][%s]:%s\x1b[0m", timestamp, sender.name, "\x1b[44m"+PRVmsg+"\x1b[0m")
+	receiver.mu.Lock()
+	fmt.Fprintln(receiver.conn, "\n"+formatted)
+	sendPrompt(sender)
+	log.Println(fmt.Sprintf("\x1b[1;37m[%s]:%s\x1b[0m", sender.name, msg))
+	receiver.mu.Unlock()
+	sendPrompt(receiver)
+
 }
