@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net"
 	"os"
@@ -17,9 +18,10 @@ func main() {
 	}
 	listener, err := net.Listen("tcp", ":"+port)
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
+		return
 	}
-	log.Println("\x1b[38;5;198mServer listening on port " + port+"\x1b[0m")
+	log.Println("\x1b[38;5;198mServer listening on port " + port + "\x1b[0m")
 
 	for {
 		conn, err := listener.Accept()

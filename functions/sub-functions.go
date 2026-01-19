@@ -26,8 +26,6 @@ func sendPromptLocked(c *Client) {
 }
 
 func validName(name string) bool {
-	mu.Lock()
-	defer mu.Unlock()
 	if strings.TrimSpace(name) == "" || len(name) > 10 {
 		return false
 	}
@@ -36,7 +34,9 @@ func validName(name string) bool {
 			return false
 		}
 	}
+	mu.Lock()
 	_, exists := clients[name]
+	mu.Unlock()
 	return !exists
 }
 
@@ -44,11 +44,9 @@ func validMsg(msg string) bool {
 	mu.Lock()
 	defer mu.Unlock()
 
-	if msg == "" || len(msg) > 100 {
+	if strings.TrimSpace(msg) == "" || len(msg) > 100 {
 		return false
 	}
-
-	// Caractères autorisés : lettres, chiffres, espaces et ponctuation courante
 
 	for _, r := range msg {
 		if !strings.ContainsRune(allowedChars, r) {
@@ -62,6 +60,9 @@ func validMsg(msg string) bool {
 func DeleteClient(c *Client) {
 	mu.Lock()
 	defer mu.Unlock()
+	leaveMsg := fmt.Sprintf("\x1b[38;5;197m%s has left our chat...\x1b[0m", c.name)
+	log.Println(leaveMsg)
+	saveHistory(leaveMsg)
 	delete(clients, c.name)
 }
 
@@ -74,6 +75,8 @@ func RenameClient(c *Client, newName string) {
 }
 
 func printUsers(conn net.Conn) {
+	mu.Lock()
+	defer mu.Unlock()
 	for _, c := range clients {
 		fmt.Fprintln(conn, "\x1b[1;38;5;226m"+c.name+"\x1b[0m")
 	}
@@ -87,7 +90,16 @@ func Tag(sender *Client, receiver *Client, msg string) {
 	mu.Lock()
 	fmt.Fprintln(receiver.conn, "\n"+formatted)
 	sendPrompt(sender)
-	log.Println(fmt.Sprintf("\x1b[1;37m[%s]:%s\x1b[0m", sender.name, msg))
+	log.Printf("\x1b[1;37m[%s]:%s\x1b[0m\n", sender.name, msg)
 	mu.Unlock()
 	sendPrompt(receiver)
+}
+
+func isAPrompt(str string) (string, bool) {
+	if strings.HasPrefix(str, "/rename ") {
+		return "rename", true
+	} else if strings.TrimRight(str, " ") == "/users" {
+		return "users", true
+	}
+	return "", false
 }

@@ -29,7 +29,7 @@ func HandleClient(conn net.Conn) {
 	}
 	name = strings.TrimSpace(name)
 	for {
-		if validName(name) && name != "" {
+		if validName(name) {
 			break
 		}
 		conn.Write([]byte("\x1b[38;5;199mName invalid or already exists !\n[ENTER NEW NAME]: \x1b[0m"))
@@ -45,10 +45,9 @@ func HandleClient(conn net.Conn) {
 	// Add client
 	mu.Lock()
 	clients[name] = client
-	mu.Unlock()
 
 	// Send chat history
-	mu.Lock()
+
 	for _, msg := range history {
 		fmt.Fprintln(client.conn, msg)
 	}
@@ -58,13 +57,12 @@ func HandleClient(conn net.Conn) {
 	joinMsg := fmt.Sprintf("\x1b[38;5;46m%s has joined our chat...\x1b[0m", name)
 	log.Println(joinMsg)
 	saveHistory(joinMsg)
-	broadcastToOthers(joinMsg, conn)
+	broadcast(joinMsg, conn)
 
 	// Send initial prompt to this client
 	sendPrompt(client)
 
 	for {
-
 		msg, err := reader.ReadString('\n')
 		if err != nil {
 			// Client disconnected
@@ -74,7 +72,7 @@ func HandleClient(conn net.Conn) {
 			mu.Lock()
 			delete(clients, name)
 			mu.Unlock()
-			broadcastToAll(leaveMsg, nil)
+			broadcast(leaveMsg, nil)
 			return
 		}
 
@@ -83,84 +81,37 @@ func HandleClient(conn net.Conn) {
 			sendPrompt(client)
 			continue
 		}
-		tag := false
 
-		mu.Lock()
-		for _, r := range clients {
-			if r != client && strings.HasPrefix(msg, "@"+r.name) && strings.TrimSpace(msg[len("@"+r.name):]) != "" {
-				Tag(client, r, msg)
-				tag = true
-				break
-			}
-		}
-		mu.Unlock()
-
-		if tag {
-			continue
-		}
-
-		if msg == "/users" {
-			printUsers(conn)
-			sendPrompt(client)
-			continue
-		}
-		if msg == "/name" {
-			mu.Lock()
-			client.isRenaming = true
-			mu.Unlock()
-
-			conn.Write([]byte("\x1b[1;37m[ENTER YOUR NEW NAME]: \x1b[0m"))
-
-			newName, err := reader.ReadString('\n')
-			if err != nil {
-				return
-			}
-			newName = strings.TrimSpace(newName)
-
-			for {
-				if validName(newName) && newName != "" {
+		if TYPE, check := isAPrompt(msg); check {
+			switch TYPE {
+			case "rename":
+				newName := strings.TrimPrefix(msg, "/rename ")
+				if validName(newName) {
 					RenameClient(client, newName)
-					break
+				} else {
+					client.conn.Write([]byte("\x1b[38;5;199minvalid name\n\x1b[0m"))
 				}
-				conn.Write([]byte("\x1b[38;5;199mName invalid or already exists !\n[ENTER NEW NAME]: \x1b[0m"))
-				newName, err = reader.ReadString('\n')
-				if err != nil {
-					return
-				}
-				newName = strings.TrimSpace(newName)
+				NewNameMsg := fmt.Sprintf(
+					"\x1b[1;38;5;196m[%s] \x1b[38;5;173mhas changed his name to \x1b[38;5;196m[%s]\x1b[0m",
+					name, newName,
+				)
+				log.Println(NewNameMsg)
+				saveHistory(NewNameMsg)
+				broadcast(NewNameMsg, conn)
+			case "users":
+				printUsers(conn)
+				sendPrompt(client)
 			}
-
-			mu.Lock()
-			client.name = newName
-			client.isRenaming = false
-
-			// flush pending messages
-			for _, p := range client.pending {
-				fmt.Fprintln(client.conn, p)
-			}
-			client.pending = nil
-			sendPromptLocked(client)
-			mu.Unlock()
-
-			NewNameMsg := fmt.Sprintf(
-				"\x1b[1;38;5;196m[%s] \x1b[38;5;173mhas changed his name to \x1b[38;5;196m[%s]\x1b[0m",
-				name, newName,
-			)
-
-			saveHistory(NewNameMsg)
-			log.Println(NewNameMsg)
-			broadcastToOthers(NewNameMsg, conn)
-
-			name = newName
+			sendPrompt(client)
 			continue
 		}
 
 		timestamp := time.Now().Format("2006-01-02 15:04:05")
 		fullMsg := fmt.Sprintf("\x1b[1;37m[%s][%s]:%s\x1b[0m", timestamp, name, "\x1b[38;5;51m"+msg+"\x1b[0m")
 		saveHistory(fullMsg)
-		log.Println(fmt.Sprintf("\x1b[1;37m[%s]:%s\x1b[0m", name, msg))
+		log.Printf("\x1b[1;37m[%s]:%s\x1b[0m\n", name, msg)
 		// Broadcast to others
-		broadcastToOthers(fullMsg, conn)
+		broadcast(fullMsg, conn)
 
 		// Send new prompt to sender
 		sendPrompt(client)

@@ -6,10 +6,9 @@ import (
 )
 
 type Client struct {
-	conn       net.Conn
-	name       string
-	pending    []string
-	isRenaming bool
+	conn    net.Conn
+	name    string
+	pending []string
 }
 
 var (
