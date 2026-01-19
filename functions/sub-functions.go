@@ -60,9 +60,6 @@ func validMsg(msg string) bool {
 func DeleteClient(c *Client) {
 	mu.Lock()
 	defer mu.Unlock()
-	leaveMsg := fmt.Sprintf("\x1b[38;5;197m%s has left our chat...\x1b[0m", c.name)
-	log.Println(leaveMsg)
-	saveHistory(leaveMsg)
 	delete(clients, c.name)
 }
 
@@ -87,11 +84,9 @@ func Tag(sender *Client, receiver *Client, msg string) {
 	PRVmsg := strings.TrimSpace(msg[len("@"+receiver.name):])
 
 	formatted := fmt.Sprintf("\x1b[1;37m[%s][%s]:%s\x1b[0m", timestamp, sender.name, "\x1b[44m"+PRVmsg+"\x1b[0m")
-	mu.Lock()
 	fmt.Fprintln(receiver.conn, "\n"+formatted)
 	sendPrompt(sender)
-	log.Printf("\x1b[1;37m[%s]:%s\x1b[0m\n", sender.name, msg)
-	mu.Unlock()
+	log.Println(fmt.Sprintf("\x1b[1;37m[%s]:%s\x1b[0m", sender.name, msg))
 	sendPrompt(receiver)
 }
 

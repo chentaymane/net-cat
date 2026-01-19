@@ -81,6 +81,20 @@ func HandleClient(conn net.Conn) {
 			sendPrompt(client)
 			continue
 		}
+		tag := false
+
+		for _, r := range clients {
+			if r != client && strings.HasPrefix(msg, "@"+r.name) && strings.TrimSpace(msg[len("@"+r.name):]) != "" {
+				Tag(client, r, msg)
+				tag = true
+				break
+			}
+
+		}
+
+		if tag {
+			continue
+		}
 
 		if TYPE, check := isAPrompt(msg); check {
 			switch TYPE {
@@ -100,7 +114,6 @@ func HandleClient(conn net.Conn) {
 				broadcast(NewNameMsg, conn)
 			case "users":
 				printUsers(conn)
-				sendPrompt(client)
 			}
 			sendPrompt(client)
 			continue
