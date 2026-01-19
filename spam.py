@@ -2,7 +2,7 @@ import socket
 import time
 
 HOST = "127.0.0.1"
-PORT = 8080
+PORT = 8989
 MAX_CLIENTS = 15
 
 def connect_user(i):

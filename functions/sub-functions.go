@@ -59,10 +59,9 @@ func validMsg(msg string) bool {
 	return true
 }
 
-func DeleteClient(c *Client, limit chan int) {
+func DeleteClient(c *Client) {
 	mu.Lock()
 	defer mu.Unlock()
-	<-limit
 	delete(clients, c.name)
 }
 

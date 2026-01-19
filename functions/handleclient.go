@@ -9,18 +9,13 @@ import (
 	"time"
 )
 
-func HandleClient(conn net.Conn, limit chan int) {
+func HandleClient(conn net.Conn) {
 	defer conn.Close()
-	// if len(clients) >= MAX_CLIENT {
-	// 	conn.Write([]byte("\x1b[38;5;227mmax client now !\x1b[0m"))
-	// 	return
-	// }
-	select {
-	case limit <- 1:
-	default:
-		conn.Write([]byte("\x1b[38;5;227mmax client now !\x1b[0m"))
-		return
-	}
+	 if len(clients) >= MAX_CLIENT {
+	 	conn.Write([]byte("\x1b[38;5;227mmax client now !\x1b[0m"))
+	 	return
+	 }
+	
 	reader := bufio.NewReader(conn)
 	// Send logo
 	conn.Write([]byte(logo))
@@ -45,7 +40,7 @@ func HandleClient(conn net.Conn, limit chan int) {
 	}
 
 	client := &Client{conn: conn, name: name}
-	defer DeleteClient(client, limit)
+	defer DeleteClient(client)
 	// Add client
 	mu.Lock()
 	clients[name] = client
@@ -92,7 +87,7 @@ func HandleClient(conn net.Conn, limit chan int) {
 
 		mu.Lock()
 		for _, r := range clients {
-			if r != client && strings.HasPrefix(msg, "@"+r.name) {
+			if r != client && strings.HasPrefix(msg, "@"+r.name) && strings.TrimSpace(msg[len("@"+r.name):])!=""{
 				Tag(client, r, msg)
 				tag = true
 				break
