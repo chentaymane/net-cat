@@ -11,11 +11,12 @@ import (
 
 func HandleClient(conn net.Conn) {
 	defer conn.Close()
-	 if len(clients) >= MAX_CLIENT {
-	 	conn.Write([]byte("\x1b[38;5;227mmax client now !\x1b[0m"))
-	 	return
-	 }
-	
+	mu.Lock()
+	if len(clients) >= MAX_CLIENT {
+		conn.Write([]byte("\x1b[38;5;227mmax client now !\x1b[0m"))
+		return
+	}
+	mu.Unlock()
 	reader := bufio.NewReader(conn)
 	// Send logo
 	conn.Write([]byte(logo))
@@ -49,9 +50,7 @@ func HandleClient(conn net.Conn) {
 	// Send chat history
 	mu.Lock()
 	for _, msg := range history {
-		client.mu.Lock()
 		fmt.Fprintln(client.conn, msg)
-		client.mu.Unlock()
 	}
 	mu.Unlock()
 
@@ -65,6 +64,7 @@ func HandleClient(conn net.Conn) {
 	sendPrompt(client)
 
 	for {
+
 		msg, err := reader.ReadString('\n')
 		if err != nil {
 			// Client disconnected
@@ -79,7 +79,7 @@ func HandleClient(conn net.Conn) {
 		}
 
 		msg = strings.TrimSpace(msg)
-		if !validMsg(msg)  {
+		if !validMsg(msg) {
 			sendPrompt(client)
 			continue
 		}
@@ -87,12 +87,11 @@ func HandleClient(conn net.Conn) {
 
 		mu.Lock()
 		for _, r := range clients {
-			if r != client && strings.HasPrefix(msg, "@"+r.name) && strings.TrimSpace(msg[len("@"+r.name):])!=""{
+			if r != client && strings.HasPrefix(msg, "@"+r.name) && strings.TrimSpace(msg[len("@"+r.name):]) != "" {
 				Tag(client, r, msg)
 				tag = true
 				break
 			}
-
 		}
 		mu.Unlock()
 
@@ -106,7 +105,12 @@ func HandleClient(conn net.Conn) {
 			continue
 		}
 		if msg == "/name" {
+			mu.Lock()
+			client.isRenaming = true
+			mu.Unlock()
+
 			conn.Write([]byte("\x1b[1;37m[ENTER YOUR NEW NAME]: \x1b[0m"))
+
 			newName, err := reader.ReadString('\n')
 			if err != nil {
 				return
@@ -115,7 +119,7 @@ func HandleClient(conn net.Conn) {
 
 			for {
 				if validName(newName) && newName != "" {
-					RenameClient(clients[client.name], newName)
+					RenameClient(client, newName)
 					break
 				}
 				conn.Write([]byte("\x1b[38;5;199mName invalid or already exists !\n[ENTER NEW NAME]: \x1b[0m"))
@@ -125,14 +129,29 @@ func HandleClient(conn net.Conn) {
 				}
 				newName = strings.TrimSpace(newName)
 			}
-			NewNameMsg := fmt.Sprintf("\x1b[1;38;5;196m[%s] \x1b[38;5;173mhas changed his name to \x1b[38;5;196m[%s]\x1b[0m", name, newName)
+
+			mu.Lock()
+			client.name = newName
+			client.isRenaming = false
+
+			// flush pending messages
+			for _, p := range client.pending {
+				fmt.Fprintln(client.conn, p)
+			}
+			client.pending = nil
+			sendPromptLocked(client)
+			mu.Unlock()
+
+			NewNameMsg := fmt.Sprintf(
+				"\x1b[1;38;5;196m[%s] \x1b[38;5;173mhas changed his name to \x1b[38;5;196m[%s]\x1b[0m",
+				name, newName,
+			)
+
 			saveHistory(NewNameMsg)
 			log.Println(NewNameMsg)
-			// Broadcast to others
 			broadcastToOthers(NewNameMsg, conn)
 
 			name = newName
-			sendPrompt(client)
 			continue
 		}
 

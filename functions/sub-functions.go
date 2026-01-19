@@ -15,8 +15,8 @@ func saveHistory(msg string) {
 }
 
 func sendPrompt(c *Client) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	mu.Lock()
+	defer mu.Unlock()
 	sendPromptLocked(c)
 }
 
@@ -78,16 +78,16 @@ func printUsers(conn net.Conn) {
 		fmt.Fprintln(conn, "\x1b[1;38;5;226m"+c.name+"\x1b[0m")
 	}
 }
+
 func Tag(sender *Client, receiver *Client, msg string) {
 	timestamp := time.Now().Format("2006-01-02 15:04:05")
 	PRVmsg := strings.TrimSpace(msg[len("@"+receiver.name):])
-	
+
 	formatted := fmt.Sprintf("\x1b[1;37m[%s][%s]:%s\x1b[0m", timestamp, sender.name, "\x1b[44m"+PRVmsg+"\x1b[0m")
-	receiver.mu.Lock()
+	mu.Lock()
 	fmt.Fprintln(receiver.conn, "\n"+formatted)
 	sendPrompt(sender)
 	log.Println(fmt.Sprintf("\x1b[1;37m[%s]:%s\x1b[0m", sender.name, msg))
-	receiver.mu.Unlock()
+	mu.Unlock()
 	sendPrompt(receiver)
-
 }
