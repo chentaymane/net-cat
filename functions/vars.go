@@ -8,7 +8,6 @@ import (
 type Client struct {
 	conn    net.Conn
 	name    string
-	pending []string
 }
 
 var (
