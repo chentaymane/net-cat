@@ -5,21 +5,24 @@ import (
 	"sync"
 )
 
+// Client represents a connected user
 type Client struct {
-	conn    net.Conn
-	name    string
+	conn net.Conn // TCP connection
+	name string   // username
 }
 
 var (
-	clients = make(map[string]*Client)
-	mu      sync.Mutex
-	history []string
+	clients = make(map[string]*Client) // active clients mapped by name
+	mu      sync.Mutex                  // mutex to protect shared resources
+	history []string                    // chat history
 )
 
+// Constants
 const (
-	MAX_CLIENT   = 10
+	MAX_CLIENT   = 10 // maximum concurrent clients
 	allowedChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .,!?;:'-()[]{}@#$%&*+=/_\"\\\t"
 
+	// ASCII Logo with color codes
 	logo = "\033[38;5;208mWelcome to TCP-Chat!\033[0m\n" +
 		"\033[1;37m         _nnnn_\033[0m\n" +
 		"\033[1;37m        dGGGGMMb\033[0m\n" +
