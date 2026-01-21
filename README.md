@@ -1,92 +1,276 @@
-🐱 Net-Cat
+# Net-Cat
 
-Net-Cat is a high-performance, terminal-based TCP chat server written in Go. It allows multiple users to communicate in a centralized chat room in real-time, featuring private mentions, command-based interactions, and full message history for late-joiners.
-✨ Features
+<div align="center">
 
-    Concurrent Handling: Built with Go goroutines to handle multiple clients simultaneously.
+![TCP](https://img.shields.io/badge/Protocol-TCP-orange?style=for-the-badge)
+![Go](https://img.shields.io/badge/Go-00ADD8?style=for-the-badge&logo=go&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
-    Persistent History: New users receive the full chat history upon joining.
+**A lightweight terminal-based TCP chat server written in Go**
 
-    User Commands: * /rename <new_name>: Change your identity on the fly.
+[Features](#-features) • [Installation](#-installation) • [Usage](#-usage) • [Commands](#-commands) • [Contributing](#-contributing)
 
-        /users: See who else is currently online.
+</div>
 
-    Direct Mentions: Use @username to highlight a message for a specific user.
+---
 
-    Thread Safety: Utilizes sync.Mutex to ensure data integrity across concurrent connections.
+## 📖 Overview
 
-    Visual Feedback: ANSI color coding for timestamps, usernames, and system notifications.
+**Net-Cat** is a real-time messaging server designed for terminal enthusiasts. It supports multiple concurrent clients, colored output, private mentions, and essential chat commands—all through a simple TCP connection.
 
-🛠 Installation
-Prerequisites
+---
 
-    Go (version 1.20 or higher)
+## ✨ Features
 
-    A terminal with nc (netcat) or telnet installed.
+- 💬 **Real-time messaging** between multiple clients
+- 👥 **Single chat room** (all clients communicate together)
+- 🎨 **ANSI-colored interface** for enhanced readability
+- 📜 **Chat history** automatically sent to new joiners
+- 🔒 **Input validation** for usernames and messages
+- ⚡ **Concurrent handling** using Go goroutines
+- 🎯 **Private mentions** with `@username` syntax
+- 🛠️ **User commands** for renaming and listing users
 
-Build from Source
-Bash
+---
 
+## 💻 Installation
+
+### Prerequisites
+
+- **Go** 1.20 or higher
+- **Git**
+- Terminal with TCP client (`nc` or `telnet`)
+
+### Build Instructions
+
+```bash
 # Clone the repository
 git clone https://github.com/chentaymane/net-cat.git
+
+# Navigate to project directory
 cd net-cat
 
 # Build the executable
 go build -o net-cat main.go
+```
 
-⚡ Usage
-1. Start the Server
+---
 
-By default, the server listens on port 8989. You can specify a custom port as an argument.
-Bash
+## ⚡ Usage
 
-./net-cat [port]
+### Starting the Server
 
-# Example
+Run the server with default port (8989):
+
+```bash
+./net-cat
+```
+
+Or specify a custom port:
+
+```bash
 ./net-cat 8080
+```
 
-2. Connect as a Client
+Output:
+```
+Listening on the port :8080
+```
 
-Open a new terminal window and connect using netcat:
-Bash
+### Connecting Clients
 
+Use **netcat** to connect:
+
+```bash
 nc localhost 8080
+```
 
-📋 Interaction Guide
-Action	Input / Command	Result
-Join	Enter your name when prompted	You enter the chat room
-Chat	Type anything and press Enter	Broadcasts to everyone
-Mention	@username <message>	Highlights message for that user
-Rename	/rename <new_name>	Updates your display name
-List Users	/users	Displays all active participants
-Example Chat Flow
-Plaintext
+You'll be greeted with:
 
+```
+Welcome to TCP-Chat!
+         _nnnn_
+        dGGGGMMb
+       @p~qp~~qMb
+       M|@||@) M|
+       @,---.JM|
+      JS^\__/  qKL
+     dZP        qKb
+    dZP          qKb
+   fZP            SMMb
+   HZM            MMMM
+   FqM            MMMM
+ __| ".        |\dS"qML
+ |    `.       | `' \Zq
+_)      \.___.,|     .'
+\____   )MMMMMP|   .'
+     `-'       `--'
+
+[ENTER YOUR NAME]:
+```
+
+---
+
+## 📝 Commands
+
+| Command | Description | Example |
+|---------|-------------|---------|
+| `/rename <new_name>` | Change your display name | `/rename RedFox` |
+| `/users` | List all connected users | `/users` |
+| `@username <message>` | Send a private mention | `@achent Hey there!` |
+
+### Example Session
+
+```
 [ENTER YOUR NAME]: achent
 [2026-01-17 20:50:25][achent]: Hello everyone!
+
 karim has joined our chat...
+
 [2026-01-17 20:50:48][karim]: @achent Hi there!
 [2026-01-17 20:51:00][achent]: /rename RedFox
-[2026-01-17 20:51:10][RedFox]: I am now RedFox!
+[2026-01-17 20:51:10][RedFox]: Welcome back!
+[2026-01-17 20:52:05][karim]: /users
 
-📂 Project Structure
-Plaintext
+Connected users:
+- RedFox
+- karim
+```
 
+---
+
+## 🏗️ Architecture
+
+### Client Structure
+
+```go
+type Client struct {
+    conn net.Conn  // TCP connection
+    name string    // Unique username
+}
+```
+
+### Core Components
+
+| Function | Purpose |
+|----------|---------|
+| `HandleClient` | Manages individual client connections in separate goroutines |
+| `broadcast` | Sends messages to all clients except the sender |
+| `Tag` | Delivers private mentions to specific users |
+| `DeleteClient` | Safely removes disconnected clients |
+| `RenameClient` | Updates client usernames with validation |
+| `sendPrompt` | Displays timestamped input prompts |
+| `validName` | Validates usernames (alphanumeric, max 10 chars) |
+| `validMsg` | Validates messages (safe characters, max 100 chars) |
+
+### Concurrency & Safety
+
+- **Goroutines** handle multiple clients simultaneously
+- **sync.Mutex** protects shared resources (client map, chat history)
+- Thread-safe operations for all client management
+
+---
+
+## 📂 Project Structure
+
+```
 net-cat/
-├── main.go            # Entry point & TCP Listener setup
-├── functions/         
-│   ├── client.go      # Client struct & lifecycle management
-│   ├── messages.go    # Broadcast & Mention logic
-│   └── utils.go       # Input validation & formatting
-├── go.mod             # Go module definition
-└── README.md
+│
+├── main.go              # Entry point, TCP listener
+├── functions/           # Core chat functionality
+│   ├── client.go       # Client management
+│   ├── messages.go     # Message handling & broadcasting
+│   └── utils.go        # Validation & utilities
+├── go.mod              # Go module definition
+├── LICENSE             # MIT License
+└── README.md           # This file
+```
 
-⚙️ Technical Overview
+---
 
-    Concurrency: Every client connection triggers a dedicated goroutine, allowing the server to scale effortlessly.
+## 🔒 Security & Validation
 
-    Validation: * Usernames: Must be unique, alphanumeric, and under 10 characters.
+### Username Rules
+- Alphanumeric characters only
+- Maximum 10 characters
+- Must be unique
+- No special characters or spaces
 
-        Messages: Length-restricted to 100 characters to prevent buffer issues.
+### Message Rules
+- Maximum 100 characters
+- Only safe ASCII characters allowed
+- No control characters or malicious input
 
-    Architecture: The server maintains a map[string]Client for O(1) lookups during mentions and a shared buffer for chat history.
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Follow these steps:
+
+1. **Fork** the repository
+2. **Create** a feature branch
+   ```bash
+   git checkout -b feature/amazing-feature
+   ```
+3. **Commit** your changes
+   ```bash
+   git commit -m 'Add amazing feature'
+   ```
+4. **Push** to the branch
+   ```bash
+   git push origin feature/amazing-feature
+   ```
+5. **Open** a Pull Request
+
+---
+
+## 📋 Requirements
+
+- Go 1.20+
+- Terminal with ANSI color support
+- Network connectivity (localhost or LAN)
+
+---
+
+## 🎯 Roadmap
+
+- [ ] Multiple chat rooms
+- [ ] Persistent chat history (database)
+- [ ] User authentication
+- [ ] File sharing support
+- [ ] TLS/SSL encryption
+- [ ] Web-based client interface
+
+---
+
+## 📜 License
+
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 👨‍💻 Author
+
+**achent**
+
+- GitHub: [@chentaymane](https://github.com/chentaymane)
+- Project: [net-cat](https://github.com/chentaymane/net-cat)
+
+---
+
+## ⚠️ Notes
+
+- Currently supports **single chat room** only
+- Requires terminal with **ANSI escape code** support
+- Designed for **local network** or **localhost** use
+- Lightweight and easy to extend
+
+---
+
+<div align="center">
+
+**Built with ❤️ using Go**
+
+⭐ Star this repo if you find it useful!
+
+</div>
