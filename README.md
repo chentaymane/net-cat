@@ -4,7 +4,6 @@
 
 ![TCP](https://img.shields.io/badge/Protocol-TCP-orange?style=for-the-badge)
 ![Go](https://img.shields.io/badge/Go-00ADD8?style=for-the-badge&logo=go&logoColor=white)
-![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
 **A lightweight terminal-based TCP chat server written in Go**
 
@@ -178,11 +177,11 @@ net-cat/
 │
 ├── main.go              # Entry point, TCP listener
 ├── functions/           # Core chat functionality
-│   ├── client.go       # Client management
-│   ├── messages.go     # Message handling & broadcasting
-│   └── utils.go        # Validation & utilities
+│   ├── broadcast.go    # Message broadcasting logic
+│   ├── handleclient.go # Client connection handling
+│   ├── sub-functions.go # Helper functions & utilities
+│   └── vars.go         # Shared variables & types
 ├── go.mod              # Go module definition
-├── LICENSE             # MIT License
 └── README.md           # This file
 ```
 
@@ -243,17 +242,11 @@ Contributions are welcome! Follow these steps:
 
 ---
 
-## 📜 License
-
-This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
-
----
-
 ## 👨‍💻 Author
 
 **achent**
 
-- GitHub: [@chentaymane](https://github.com/chentaymane)
+- GitHub: [@chentaymane](https://github.com/chentaymane) / [@mrshD3IM05](https://github.com/mrshD3IM05)
 - Project: [net-cat](https://github.com/chentaymane/net-cat)
 
 ---
