@@ -13,13 +13,6 @@ func HandleClient(conn net.Conn) {
 	defer conn.Close()
 
 	// Check max clients (protected)
-	mu.Lock()
-	if len(clients) >= MAX_CLIENT {
-		mu.Unlock()
-		conn.Write([]byte("\x1b[38;5;227mmax client now !\x1b[0m"))
-		return
-	}
-	mu.Unlock()
 
 	reader := bufio.NewReader(conn)
 
@@ -49,17 +42,19 @@ func HandleClient(conn net.Conn) {
 
 	// Create client
 	client := &Client{conn: conn, name: name}
-	defer DeleteClient(client) // Ensure cleanup on exit
-
-	// Add client to map
-	mu.Lock()
-	clients[name] = client
+	TYPE := Add(client)
+	if TYPE != "" {
+		if TYPE == "name" {
+			conn.Write([]byte("\x1b[38;5;199mName already exists.\n\x1b[0m"))
+		} else {
+			conn.Write([]byte("\x1b[38;5;199mServer full, try again later.\n\x1b[0m"))
+			return
+		}
+	}
+	defer Remove(client) // Ensure cleanup on exit
 
 	// Send chat history to new client
-	for _, msg := range history {
-		fmt.Fprintln(client.conn, msg)
-	}
-	mu.Unlock()
+	loadHistory(client)
 
 	// Broadcast join message
 	joinMsg := fmt.Sprintf("\x1b[38;5;46m%s has joined our chat...\x1b[0m", name)
@@ -118,7 +113,7 @@ func HandleClient(conn net.Conn) {
 			case "rename":
 				newName := strings.TrimPrefix(msg, "/rename ")
 				if validName(newName) {
-					RenameClient(client, newName)
+					Rename(client, newName)
 				} else {
 					client.conn.Write([]byte("\x1b[38;5;199minvalid name\n\x1b[0m"))
 				}
@@ -134,26 +129,23 @@ func HandleClient(conn net.Conn) {
 			case "users":
 				printUsers(conn)
 			}
+		} else {
 
-			sendPrompt(client)
-			continue
+			// Normal chat message
+			timestamp := time.Now().Format("2006-01-02 15:04:05")
+			fullMsg := fmt.Sprintf(
+				"\x1b[1;37m[%s][%s]:%s\x1b[0m",
+				timestamp,
+				name,
+				"\x1b[38;5;51m"+msg+"\x1b[0m",
+			)
+
+			saveHistory(fullMsg)
+			log.Printf("\x1b[1;37m[%s]:%s\x1b[0m\n", name, msg)
+
+			// Broadcast message to others
+			broadcast(fullMsg, conn)
 		}
-
-		// Normal chat message
-		timestamp := time.Now().Format("2006-01-02 15:04:05")
-		fullMsg := fmt.Sprintf(
-			"\x1b[1;37m[%s][%s]:%s\x1b[0m",
-			timestamp,
-			name,
-			"\x1b[38;5;51m"+msg+"\x1b[0m",
-		)
-
-		saveHistory(fullMsg)
-		log.Printf("\x1b[1;37m[%s]:%s\x1b[0m\n", name, msg)
-
-		// Broadcast message to others
-		broadcast(fullMsg, conn)
-
 		// Send prompt back to sender
 		sendPrompt(client)
 	}

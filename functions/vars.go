@@ -13,8 +13,8 @@ type Client struct {
 
 var (
 	clients = make(map[string]*Client) // active clients mapped by name
-	mu      sync.Mutex                  // mutex to protect shared resources
-	history []string                    // chat history
+	mu      sync.RWMutex               // mutex to protect shared resources
+	history []string                   // chat history
 )
 
 // Constants

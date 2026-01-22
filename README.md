@@ -156,8 +156,9 @@ type Client struct {
 | `HandleClient` | Manages individual client connections in separate goroutines |
 | `broadcast` | Sends messages to all clients except the sender |
 | `Tag` | Delivers private mentions to specific users |
-| `DeleteClient` | Safely removes disconnected clients |
-| `RenameClient` | Updates client usernames with validation |
+| `Add` | Safely Add new clients |
+| `Remove` | Safely removes disconnected clients |
+| `Rename` | Updates client usernames with validation |
 | `sendPrompt` | Displays timestamped input prompts |
 | `validName` | Validates usernames (alphanumeric, max 10 chars) |
 | `validMsg` | Validates messages (safe characters, max 100 chars) |
@@ -165,7 +166,7 @@ type Client struct {
 ### Concurrency & Safety
 
 - **Goroutines** handle multiple clients simultaneously
-- **sync.Mutex** protects shared resources (client map, chat history)
+- **sync.RWMutex** protects shared resources (client map, chat history)
 - Thread-safe operations for all client management
 
 ---
@@ -179,6 +180,7 @@ net-cat/
 ├── functions/           # Core chat functionality
 │   ├── broadcast.go    # Message broadcasting logic
 │   ├── handleclient.go # Client connection handling
+│   ├── Client.go       # Client functions
 │   ├── sub-functions.go # Helper functions & utilities
 │   └── vars.go         # Shared variables & types
 ├── go.mod              # Go module definition
@@ -231,7 +233,7 @@ Contributions are welcome! Follow these steps:
 
 ---
 
-## 🎯 Roadmap
+## 🎯 Roadmap (can be added)
 
 - [ ] Multiple chat rooms
 - [ ] Persistent chat history (database)
@@ -244,7 +246,7 @@ Contributions are welcome! Follow these steps:
 
 ## 👨‍💻 Author
 
-**achent**
+**achent** **ahaddou**
 
 - GitHub: [@chentaymane](https://github.com/chentaymane) / [@mrshD3IM05](https://github.com/mrshD3IM05)
 - Project: [net-cat](https://github.com/chentaymane/net-cat)

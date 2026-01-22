@@ -15,6 +15,14 @@ func saveHistory(msg string) {
 	history = append(history, msg)
 }
 
+func loadHistory(c *Client) {
+	mu.RLock()
+	defer mu.RUnlock()
+	for _, msg := range history {
+		c.conn.Write([]byte(msg + "\n"))
+	}
+}
+
 // Public function: safe prompt sending
 func sendPrompt(c *Client) {
 	mu.Lock()
@@ -74,23 +82,6 @@ func validMsg(msg string) bool {
 	}
 
 	return true
-}
-
-// Remove client from map
-func DeleteClient(c *Client) {
-	mu.Lock()
-	defer mu.Unlock()
-	delete(clients, c.name)
-}
-
-// Rename a client safely
-func RenameClient(c *Client, newName string) {
-	mu.Lock()
-	defer mu.Unlock()
-
-	delete(clients, c.name)
-	c.name = newName
-	clients[newName] = c
 }
 
 // Print all connected users
