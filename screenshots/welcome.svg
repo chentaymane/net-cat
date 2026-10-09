@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="288" height="419" viewBox="0 0 288 419">
+<style>text{font-family:"JetBrains Mono","Cascadia Code",Consolas,"DejaVu Sans Mono",monospace;font-size:14px;white-space:pre}</style>
+<rect width="288" height="419" rx="10" fill="#1e1e2e"/>
+<rect width="288" height="30" rx="10" fill="#313244"/><rect y="20" width="288" height="10" fill="#313244"/>
+<circle cx="18" cy="15" r="6" fill="#f38ba8"/><circle cx="38" cy="15" r="6" fill="#f9e2af"/><circle cx="58" cy="15" r="6" fill="#a6e3a1"/>
+<text x="144.0" y="20" fill="#a6adc8" text-anchor="middle" font-size="13">nc localhost 8989</text>
+<text x="18.0" y="54" fill="#ff8700" textLength="168.0" xml:space="preserve">Welcome to TCP-Chat!</text>
+<text x="18.0" y="73" fill="#ffffff" font-weight="bold" textLength="126.0" xml:space="preserve">         _nnnn_</text>
+<text x="18.0" y="92" fill="#ffffff" font-weight="bold" textLength="134.4" xml:space="preserve">        dGGGGMMb</text>
+<text x="18.0" y="111" fill="#ffffff" font-weight="bold" textLength="142.8" xml:space="preserve">       @p~qp~~qMb</text>
+<text x="18.0" y="130" fill="#ffffff" font-weight="bold" textLength="75.6" xml:space="preserve">       M|</text>
+<text x="93.6" y="130" fill="#ff8700" font-weight="bold" textLength="8.4" xml:space="preserve">@</text>
+<text x="102.0" y="130" fill="#ffffff" font-weight="bold" textLength="16.8" xml:space="preserve">||</text>
+<text x="118.8" y="130" fill="#ff8700" font-weight="bold" textLength="8.4" xml:space="preserve">@</text>
+<text x="127.2" y="130" fill="#ffffff" font-weight="bold" textLength="33.6" xml:space="preserve">) M|</text>
+<text x="18.0" y="149" fill="#ffffff" font-weight="bold" textLength="142.8" xml:space="preserve">       @,----.JM|</text>
+<text x="18.0" y="168" fill="#ffffff" font-weight="bold" textLength="151.2" xml:space="preserve">      JS^\__/  qKL</text>
+<text x="18.0" y="187" fill="#ffffff" font-weight="bold" textLength="168.0" xml:space="preserve">     dZP        qKRb</text>
+<text x="18.0" y="206" fill="#ffffff" font-weight="bold" textLength="176.4" xml:space="preserve">    dZP          qKKb</text>
+<text x="18.0" y="225" fill="#ffffff" font-weight="bold" textLength="184.8" xml:space="preserve">   fZP            SMMb</text>
+<text x="18.0" y="244" fill="#ffffff" font-weight="bold" textLength="184.8" xml:space="preserve">   HZM            MMMM</text>
+<text x="18.0" y="263" fill="#ffffff" font-weight="bold" textLength="184.8" xml:space="preserve">   FqM            MMMM</text>
+<text x="18.0" y="282" fill="#ff8700" textLength="193.2" xml:space="preserve"> __| &quot;.        |\dS&quot;qML</text>
+<text x="18.0" y="301" fill="#ff8700" textLength="193.2" xml:space="preserve"> |    `.       | `&#x27; \Zq</text>
+<text x="18.0" y="320" fill="#ff8700" textLength="193.2" xml:space="preserve">_)      \.___.,|     .&#x27;</text>
+<text x="18.0" y="339" fill="#ff8700" textLength="176.4" xml:space="preserve">\____   )MMMMMP|   .&#x27;</text>
+<text x="18.0" y="358" fill="#ff8700" textLength="159.6" xml:space="preserve">     `-&#x27;       `--&#x27;</text>
+<text x="18.0" y="377" fill="#ffffff" font-weight="bold" textLength="159.6" xml:space="preserve">[ENTER YOUR NAME]: </text>
+<text x="177.6" y="377" fill="#cdd6f4" textLength="50.4" xml:space="preserve">achent</text>
+<text x="18.0" y="396" fill="#ffffff" font-weight="bold" textLength="252.0" xml:space="preserve">[2026-10-09 23:30:36][achent]:</text>
+</svg>

@@ -19,6 +19,37 @@
 
 ---
 
+## 📸 Screenshots
+
+### Joining the chat
+
+<p align="center">
+  <img src="screenshots/welcome.svg" alt="Welcome screen with ASCII logo and name prompt" />
+</p>
+
+### A live conversation (two clients side by side)
+
+Private mentions (`@username`) appear highlighted for the receiver only, and `/users` lists everyone connected.
+
+<table>
+  <tr>
+    <th>achent's terminal</th>
+    <th>karim's terminal</th>
+  </tr>
+  <tr>
+    <td><img src="screenshots/chat-achent.svg" alt="Chat session from achent's point of view" /></td>
+    <td><img src="screenshots/chat-karim.svg" alt="Chat session from karim's point of view" /></td>
+  </tr>
+</table>
+
+### Server log
+
+<p align="center">
+  <img src="screenshots/server.svg" alt="Server log showing joins, messages and leaves" />
+</p>
+
+---
+
 ## ✨ Features
 
 - 💬 **Real-time messaging** between multiple clients
@@ -183,6 +214,7 @@ net-cat/
 │   ├── Client.go       # Client functions
 │   ├── sub-functions.go # Helper functions & utilities
 │   └── vars.go         # Shared variables & types
+├── screenshots/        # README screenshots
 ├── go.mod              # Go module definition
 └── README.md           # This file
 ```
